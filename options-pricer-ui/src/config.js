@@ -4,3 +4,4 @@
 // Either add "http://localhost:3000" to `allow_origins` in main.py, or serve this
 // build from port 5173, or requests will be blocked by the browser's CORS policy.
 export const API_BASE_URL = "https://volos-backend.onrender.com";
+export const API_BASE = "https://volos-backend.onrender.com";
