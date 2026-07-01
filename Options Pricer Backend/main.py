@@ -16,10 +16,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Added your local frontend port
-        "http://localhost:5173",  # Keep Vite just in case
-    ],
+    allow_origins=["*"],  # Allows any frontend interface to securely communicate with your API
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
