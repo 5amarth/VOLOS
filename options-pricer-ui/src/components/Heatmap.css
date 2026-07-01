@@ -1,0 +1,34 @@
+.heatmap-wrap {
+  background: transparent;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.heatmap-wrap .apexcharts-canvas {
+  background: transparent !important;
+}
+
+.heatmap-wrap .apexcharts-tooltip {
+  background: var(--surface-raised) !important;
+  border: 1px solid var(--border-bright) !important;
+  color: var(--white-ghost) !important;
+  font-family: var(--font-mono);
+}
+
+.heatmap-wrap .apexcharts-tooltip-title {
+  background: var(--deep-stone) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.heatmap-wrap .apexcharts-legend-series {
+  margin: 2px 4px !important;
+}
+
+/* Halo behind the value text inside each cell so dark text stays legible
+   against both the dark-purple and bright-cyan/green/red ends of the scale */
+.heatmap-wrap .apexcharts-datalabel {
+  paint-order: stroke fill;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}

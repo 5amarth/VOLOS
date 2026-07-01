@@ -1,0 +1,43 @@
+.parity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+}
+
+.parity-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.parity-badge-label {
+  color: var(--vellum-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.58rem;
+}
+
+.parity-badge-value {
+  font-weight: 500;
+}
+
+.parity-badge--ok {
+  border-color: rgba(63, 166, 92, 0.4);
+  background: rgba(63, 166, 92, 0.08);
+}
+.parity-badge--ok .parity-badge-dot { background: #3FA65C; box-shadow: 0 0 4px rgba(63, 166, 92, 0.6); }
+.parity-badge--ok .parity-badge-value { color: #6FCB86; }
+
+.parity-badge--warn {
+  border-color: rgba(179, 58, 58, 0.5);
+  background: rgba(179, 58, 58, 0.1);
+}
+.parity-badge--warn .parity-badge-dot { background: #B33A3A; box-shadow: 0 0 4px rgba(179, 58, 58, 0.6); }
+.parity-badge--warn .parity-badge-value { color: #E08080; }

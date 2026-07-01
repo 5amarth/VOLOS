@@ -1,0 +1,16 @@
+.vol-surface-wrap {
+  width: 100%;
+  background: transparent;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.vol-surface-wrap .js-plotly-plot,
+.vol-surface-wrap .plot-container,
+.vol-surface-wrap .svg-container {
+  background: transparent !important;
+}
+
+.vol-surface-wrap .main-svg {
+  background: transparent !important;
+}

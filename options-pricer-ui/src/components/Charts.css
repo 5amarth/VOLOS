@@ -1,0 +1,26 @@
+.chart-wrap {
+  width: 100%;
+  background: transparent;
+}
+
+.chart-empty {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--vellum-faint);
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.chart-caption {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--vellum-faint);
+  text-align: center;
+  margin-top: -0.5rem;
+}
+
+.recharts-cartesian-axis-line {
+  stroke: #3D3D52 !important;
+}

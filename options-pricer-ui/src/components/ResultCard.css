@@ -1,0 +1,66 @@
+.result-card {
+  background: var(--deep-stone);
+  border: 1px solid var(--border);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: relative;
+  border-radius: 2px;
+  transition: border-color 0.2s ease;
+}
+
+.result-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--border);
+  border-radius: 2px 0 0 2px;
+}
+
+.result-card--highlight {
+  border-color: var(--bronze);
+  background: rgba(139, 105, 20, 0.06);
+}
+
+.result-card--highlight::before {
+  background: var(--bronze-glow);
+}
+
+.result-card-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vellum-dim);
+  line-height: 1;
+}
+
+.result-card-value {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--white-ghost);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.result-card--highlight .result-card-value {
+  color: var(--bronze-glow);
+}
+
+.result-card-unit {
+  font-size: 0.75rem;
+  color: var(--vellum-dim);
+  margin-right: 2px;
+}
+
+.result-card-sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.7rem;
+  color: var(--vellum-faint);
+  margin-top: 0.1rem;
+}
