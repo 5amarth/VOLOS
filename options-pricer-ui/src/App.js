@@ -45,6 +45,11 @@ export default function App() {
   return (
     <div className="app">
       <Header />
+      <div className="server-notice">
+        <span className="server-notice-text">
+          This site is hosted on a free server — the first calculation may take up to a minute to wake it up.
+        </span>
+      </div>
       <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="app-main">
         <Suspense fallback={<PageLoadingFallback />}>
