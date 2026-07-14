@@ -11,6 +11,11 @@ function clamp01(t) {
   return Math.max(0, Math.min(1, t));
 }
 
+// Shared bucket count used for both the discrete color ranges and the
+// legend-hover highlighting, so "which bucket is the mouse over" and "which
+// bucket is this cell in" are always computed the exact same way.
+export const HEATMAP_STEPS = 10;
+
 // ---- Price scale: purple (low) -> electric cyan (high) ------------------
 // Lightness is capped at 56% so a light overlaid label stays readable across
 // the entire range, from the darkest purple to the brightest cyan.
@@ -65,8 +70,8 @@ export function matrixMinMax(matrix) {
   return { min: Math.min(...flat), max: Math.max(...flat) };
 }
 
-// Discrete color "ranges" for ApexCharts heatmap colorScale.ranges
-export function buildPriceRanges(min, max, steps = 10) {
+// Discrete color "ranges" — used to color each cell by bucket index
+export function buildPriceRanges(min, max, steps = HEATMAP_STEPS) {
   if (min === max) {
     return [{ from: min - 1, to: max + 1, color: priceColorAt(1), name: min.toFixed(2) }];
   }
@@ -82,7 +87,7 @@ export function buildPriceRanges(min, max, steps = 10) {
 }
 
 // Discrete diverging red -> gray -> green ranges, symmetric around zero
-export function buildProfitRanges(min, max, steps = 10) {
+export function buildProfitRanges(min, max, steps = HEATMAP_STEPS) {
   const absMax = Math.max(Math.abs(min), Math.abs(max), 1e-6);
   const span = absMax * 2;
   const ranges = [];
@@ -94,6 +99,24 @@ export function buildProfitRanges(min, max, steps = 10) {
     ranges.push({ from, to, color: profitColorAt(t), name: `${from.toFixed(2)}–${to.toFixed(2)}` });
   }
   return ranges;
+}
+
+// Which bucket (0..steps-1) a given price-heatmap value falls into. Uses the
+// exact same equal-width partition as buildPriceRanges, so ranges[index].color
+// always matches the color this function implies.
+export function priceBucketIndex(value, min, max, steps = HEATMAP_STEPS) {
+  if (min === max) return steps - 1;
+  const t = (value - min) / (max - min);
+  return Math.max(0, Math.min(steps - 1, Math.floor(t * steps)));
+}
+
+// Which bucket (0..steps-1) a given profit-heatmap value falls into. Mirrors
+// the symmetric partition used by buildProfitRanges.
+export function profitBucketIndex(value, min, max, steps = HEATMAP_STEPS) {
+  const absMax = Math.max(Math.abs(min), Math.abs(max), 1e-6);
+  const t = value / absMax; // -1 .. 1
+  const tNorm = (t + 1) / 2; // 0 .. 1
+  return Math.max(0, Math.min(steps - 1, Math.floor(tNorm * steps)));
 }
 
 // CSS linear-gradient strings for the compact custom legend bar

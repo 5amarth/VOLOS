@@ -3,9 +3,9 @@ import './App.css';
 import Header from './components/Header';
 import TabNav from './components/TabNav';
 
-// Lazy-loaded so each tab's chart dependencies (ApexCharts, Recharts, Plotly)
-// only download when that tab is actually opened, instead of bloating the
-// initial page load for everyone.
+// Lazy-loaded so each tab's heavier dependencies (Recharts, Plotly) only
+// download when that tab is actually opened, instead of bloating the initial
+// page load for everyone.
 const BinomialTree = lazy(() => import('./pages/BinomialTree'));
 const BlackScholes = lazy(() => import('./pages/BlackScholes'));
 const ImpliedVol = lazy(() => import('./pages/ImpliedVol'));

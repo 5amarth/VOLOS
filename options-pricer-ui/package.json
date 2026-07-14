@@ -7,8 +7,6 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "recharts": "^2.12.7",
-    "apexcharts": "^4.5.0",
-    "react-apexcharts": "^1.9.0",
     "plotly.js-dist-min": "^2.33.0",
     "react-plotly.js": "^2.6.0",
     "papaparse": "^5.4.1",

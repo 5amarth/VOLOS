@@ -1,98 +1,93 @@
-import React, { useMemo } from 'react';
-import Chart from 'react-apexcharts';
+import React, { useMemo, useState } from 'react';
 import {
-  matrixMinMax, buildPriceRanges, buildProfitRanges, priceGradientCSS, profitGradientCSS,
+  matrixMinMax, buildPriceRanges, buildProfitRanges,
+  priceBucketIndex, profitBucketIndex,
+  priceGradientCSS, profitGradientCSS, HEATMAP_STEPS,
 } from '../utils/colorScale';
 import './Heatmap.css';
 
 // matrix: 2D array, matrix[i][j] -> row i, col j
 // rowLabels / colLabels: arrays of numbers to label rows/cols
 // mode: 'price' | 'profit'
-export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTitle, colAxisTitle, height = 460 }) {
-  const { series, ranges, min, max } = useMemo(() => {
+export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTitle, colAxisTitle }) {
+  const [hoveredBucket, setHoveredBucket] = useState(null);
+
+  const { min, max, ranges } = useMemo(() => {
     const { min, max } = matrixMinMax(matrix);
-    const colorRanges = mode === 'profit' ? buildProfitRanges(min, max) : buildPriceRanges(min, max);
+    const ranges = mode === 'profit' ? buildProfitRanges(min, max) : buildPriceRanges(min, max);
+    return { min, max, ranges };
+  }, [matrix, mode]);
 
-    const seriesData = matrix.map((row, i) => ({
-      name: rowLabels[i] !== undefined ? rowLabels[i].toFixed(2) : `${i}`,
-      data: row.map((value, j) => ({
-        x: colLabels[j] !== undefined ? colLabels[j].toFixed(3) : `${j}`,
-        y: Number(value.toFixed(4)),
-      })),
-    }));
-
-    return { series: seriesData, ranges: colorRanges, min, max };
-  }, [matrix, rowLabels, colLabels, mode]);
+  const bucketOf = (value) => (
+    mode === 'profit' ? profitBucketIndex(value, min, max) : priceBucketIndex(value, min, max)
+  );
 
   const gradientCSS = useMemo(
     () => (mode === 'profit' ? profitGradientCSS() : priceGradientCSS()),
     [mode]
   );
 
-  const options = useMemo(() => ({
-    chart: {
-      type: 'heatmap',
-      background: 'transparent',
-      foreColor: '#B3A688',
-      toolbar: { show: false },
-      animations: { enabled: false },
-    },
-    theme: { mode: 'dark' },
-    plotOptions: {
-      heatmap: {
-        enableShades: false,
-        colorScale: { ranges },
-      },
-    },
-    dataLabels: {
-      enabled: true,
-      // Light, bold text with a soft shadow (see .heatmap-wrap CSS) reads cleanly
-      // against every cell color in the ramp, without a boxed/bordered look.
-      style: { fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, colors: ['#F5F0E4'] },
-      formatter: (val) => Number(val).toFixed(2),
-    },
-    stroke: {
-      width: 0,
-    },
-    grid: {
-      show: false,
-      padding: { left: 0, right: 0, top: 0, bottom: 0 },
-    },
-    xaxis: {
-      title: {
-        text: colAxisTitle,
-        style: { color: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 500 },
-      },
-      labels: {
-        style: { colors: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 500 },
-        rotate: -45,
-      },
-      axisBorder: { color: '#2A2A3A' },
-      axisTicks: { color: '#2A2A3A' },
-    },
-    yaxis: {
-      title: {
-        text: rowAxisTitle,
-        style: { color: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 500 },
-      },
-      labels: {
-        style: { colors: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 500 },
-      },
-    },
-    // The built-in per-range legend produced a cluttered, variable-height wall of
-    // swatches. A single compact gradient bar (below) replaces it consistently.
-    legend: { show: false },
-    tooltip: {
-      theme: 'dark',
-      y: { formatter: (val) => Number(val).toFixed(6) },
-    },
-  }), [ranges, rowAxisTitle, colAxisTitle]);
+  const handleLegendMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const bucket = Math.max(0, Math.min(HEATMAP_STEPS - 1, Math.floor(fraction * HEATMAP_STEPS)));
+    setHoveredBucket(bucket);
+  };
+
+  const numCols = colLabels.length;
 
   return (
     <div className="heatmap-wrap">
-      <Chart options={options} series={series} type="heatmap" height={height} />
+      <div className="heatmap-body">
+        <div className="heatmap-yaxis-title">{rowAxisTitle}</div>
+
+        <div className="heatmap-scroll">
+          <div
+            className="heatmap-grid"
+            style={{ gridTemplateColumns: `72px repeat(${numCols}, minmax(50px, 1fr))` }}
+          >
+            {matrix.map((row, i) => (
+              <React.Fragment key={i}>
+                <div className="heatmap-row-label">{rowLabels[i] !== undefined ? rowLabels[i].toFixed(2) : i}</div>
+                {row.map((value, j) => {
+                  const bucket = bucketOf(value);
+                  const isHighlighted = hoveredBucket !== null && bucket === hoveredBucket;
+                  const isDimmed = hoveredBucket !== null && bucket !== hoveredBucket;
+                  return (
+                    <div
+                      key={j}
+                      className={[
+                        'heatmap-cell',
+                        isHighlighted ? 'heatmap-cell--highlighted' : '',
+                        isDimmed ? 'heatmap-cell--dimmed' : '',
+                      ].join(' ').trim()}
+                      style={{ background: ranges[bucket]?.color }}
+                      title={value.toFixed(6)}
+                    >
+                      {value.toFixed(2)}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+
+            <div className="heatmap-corner" />
+            {colLabels.map((c, j) => (
+              <div className="heatmap-col-label" key={j}>{c.toFixed(3)}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="heatmap-xaxis-title">{colAxisTitle}</div>
+
       <div className="heatmap-legend">
-        <div className="heatmap-legend-bar" style={{ background: gradientCSS }} />
+        <div
+          className="heatmap-legend-bar"
+          style={{ background: gradientCSS }}
+          onMouseMove={handleLegendMove}
+          onMouseLeave={() => setHoveredBucket(null)}
+        />
         <div className="heatmap-legend-labels">
           <span className="heatmap-legend-label">
             {mode === 'profit' ? `${min.toFixed(2)} loss` : min.toFixed(2)}

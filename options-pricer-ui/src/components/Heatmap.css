@@ -1,35 +1,104 @@
 .heatmap-wrap {
   background: transparent;
-  border-radius: 2px;
-  overflow: hidden;
+  width: 100%;
 }
 
-.heatmap-wrap .apexcharts-canvas {
-  background: transparent !important;
+.heatmap-body {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
 }
 
-.heatmap-wrap .apexcharts-tooltip {
-  background: var(--surface-raised) !important;
-  border: 1px solid var(--border-bright) !important;
-  color: var(--white-ghost) !important;
+.heatmap-yaxis-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--vellum-dim);
+  flex-shrink: 0;
+  padding: 0.25rem 0;
 }
 
-.heatmap-wrap .apexcharts-tooltip-title {
-  background: var(--deep-stone) !important;
-  border-bottom: 1px solid var(--border) !important;
+.heatmap-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 2px; /* room for scrollbar without clipping the grid */
 }
 
-/* Soft shadow behind each cell's value (instead of a hard stroke outline) keeps
-   the light label text readable against every color in the ramp without
-   looking like each number has its own little border/box. */
-.heatmap-wrap .apexcharts-datalabel {
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
+.heatmap-grid {
+  display: grid;
+  grid-auto-rows: minmax(38px, auto);
+  gap: 2px;
+  min-width: 100%;
 }
 
-/* ── Compact gradient legend (replaces ApexCharts' cluttered swatch legend) ── */
+.heatmap-row-label,
+.heatmap-col-label,
+.heatmap-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--vellum-dim);
+}
+
+.heatmap-row-label {
+  justify-content: flex-end;
+  padding-right: 0.6rem;
+}
+
+.heatmap-col-label {
+  padding-top: 0.4rem;
+  font-size: 0.64rem;
+}
+
+.heatmap-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: #F5F0E4;
+  border-radius: 2px;
+  filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9));
+  transition: opacity 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+  cursor: default;
+}
+
+.heatmap-cell--highlighted {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
+  transform: scale(1.03);
+  z-index: 1;
+}
+
+.heatmap-cell--dimmed {
+  opacity: 0.25;
+}
+
+.heatmap-xaxis-title {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--vellum-dim);
+  margin-top: 0.6rem;
+}
+
+/* ── Compact interactive gradient legend ───────────────────────────── */
 .heatmap-legend {
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   padding: 0 0.5rem;
   display: flex;
   flex-direction: column;
@@ -37,9 +106,10 @@
 }
 
 .heatmap-legend-bar {
-  height: 10px;
+  height: 14px;
   width: 100%;
   border-radius: 3px;
+  cursor: crosshair;
 }
 
 .heatmap-legend-labels {
@@ -60,4 +130,9 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+}
+
+@media (max-width: 600px) {
+  .heatmap-yaxis-title { font-size: 0.58rem; }
+  .heatmap-cell, .heatmap-row-label, .heatmap-col-label { font-size: 0.58rem; }
 }
