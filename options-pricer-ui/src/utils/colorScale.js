@@ -1,40 +1,60 @@
-// Color interpolation helpers for heatmaps (price = plum -> electric cyan)
-// and profit maps (red for losses -> green for gains).
+// Color ramp helpers for heatmaps (price = purple -> electric cyan, brightening
+// with value) and profit maps (neutral gray at zero, brightening to green for
+// gains / red for losses as magnitude grows). HSL interpolation is used instead
+// of raw RGB lerps so the in-between tones stay clean instead of turning muddy.
 
-function hexToRgb(hex) {
-  const clean = hex.replace('#', '');
-  const bigint = parseInt(clean, 16);
-  return {
-    r: (bigint >> 16) & 255,
-    g: (bigint >> 8) & 255,
-    b: bigint & 255,
-  };
+function hsl(h, s, l) {
+  return `hsl(${h.toFixed(1)}, ${s.toFixed(1)}%, ${l.toFixed(1)}%)`;
 }
 
-function rgbToHex(r, g, b) {
-  const toHex = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+function clamp01(t) {
+  return Math.max(0, Math.min(1, t));
 }
 
-export function lerpColor(hexA, hexB, t) {
-  const a = hexToRgb(hexA);
-  const b = hexToRgb(hexB);
-  const clampT = Math.max(0, Math.min(1, t));
-  return rgbToHex(
-    a.r + (b.r - a.r) * clampT,
-    a.g + (b.g - a.g) * clampT,
-    a.b + (b.b - a.b) * clampT
-  );
+// ---- Price scale: purple (low) -> electric cyan (high) ------------------
+// Lightness is capped at 56% so a light overlaid label stays readable across
+// the entire range, from the darkest purple to the brightest cyan.
+const PRICE_HUE_LOW = 265;
+const PRICE_HUE_HIGH = 189;
+const PRICE_SAT_LOW = 45;
+const PRICE_SAT_HIGH = 78;
+const PRICE_LIGHT_LOW = 32;
+const PRICE_LIGHT_HIGH = 56;
+
+export function priceColorAt(t) {
+  const ct = clamp01(t);
+  const hue = PRICE_HUE_LOW + (PRICE_HUE_HIGH - PRICE_HUE_LOW) * ct;
+  const sat = PRICE_SAT_LOW + (PRICE_SAT_HIGH - PRICE_SAT_LOW) * ct;
+  const light = PRICE_LIGHT_LOW + (PRICE_LIGHT_HIGH - PRICE_LIGHT_LOW) * ct;
+  return hsl(hue, sat, light);
 }
 
-// Plum-ish purple -> electric cyan, used for absolute price heatmaps and the vol surface
-export const PRICE_SCALE_LOW = '#8B5FBF';
-export const PRICE_SCALE_HIGH = '#00F0FF';
+// ---- Profit scale: neutral gray at zero -> green (gain) / red (loss) ----
+// Hue is fixed per side (no crossing through muddy intermediate hues); only
+// saturation and lightness ramp up with magnitude, so the sign is always
+// obvious at a glance and the "how much" reads as brightness.
+const PROFIT_NEUTRAL_HUE = 45;
+const PROFIT_NEUTRAL_SAT = 6;
+const PROFIT_NEUTRAL_LIGHT = 38;
+const PROFIT_GREEN_HUE = 142;
+const PROFIT_RED_HUE = 355;
+const PROFIT_SAT_LOW = 16;
+const PROFIT_SAT_HIGH = 70;
+const PROFIT_LIGHT_LOW = 30;
+const PROFIT_LIGHT_HIGH = 50;
+const PROFIT_NEUTRAL_DEADZONE = 0.035; // |t| below this reads as "flat"
 
-// Deep crimson (loss) -> muted stone (near zero) -> emerald (gain)
-export const PROFIT_SCALE_LOSS = '#FF3B3B';
-export const PROFIT_SCALE_MID = '#3A3A2E';
-export const PROFIT_SCALE_GAIN = '#3FA65C';
+export function profitColorAt(t) {
+  const ct = Math.max(-1, Math.min(1, t));
+  const at = Math.abs(ct);
+  if (at < PROFIT_NEUTRAL_DEADZONE) {
+    return hsl(PROFIT_NEUTRAL_HUE, PROFIT_NEUTRAL_SAT, PROFIT_NEUTRAL_LIGHT);
+  }
+  const sat = PROFIT_SAT_LOW + (PROFIT_SAT_HIGH - PROFIT_SAT_LOW) * at;
+  const light = PROFIT_LIGHT_LOW + (PROFIT_LIGHT_HIGH - PROFIT_LIGHT_LOW) * at;
+  const hue = ct >= 0 ? PROFIT_GREEN_HUE : PROFIT_RED_HUE;
+  return hsl(hue, sat, light);
+}
 
 export function flattenMatrix(matrix) {
   return matrix.flat();
@@ -45,10 +65,10 @@ export function matrixMinMax(matrix) {
   return { min: Math.min(...flat), max: Math.max(...flat) };
 }
 
-// Builds N discrete color "ranges" for ApexCharts heatmap colorScale.ranges
-export function buildPriceRanges(min, max, steps = 12) {
+// Discrete color "ranges" for ApexCharts heatmap colorScale.ranges
+export function buildPriceRanges(min, max, steps = 10) {
   if (min === max) {
-    return [{ from: min - 1, to: max + 1, color: PRICE_SCALE_HIGH, name: min.toFixed(2) }];
+    return [{ from: min - 1, to: max + 1, color: priceColorAt(1), name: min.toFixed(2) }];
   }
   const span = max - min;
   const ranges = [];
@@ -56,18 +76,13 @@ export function buildPriceRanges(min, max, steps = 12) {
     const from = min + (span * i) / steps;
     const to = min + (span * (i + 1)) / steps;
     const t = (i + 0.5) / steps;
-    ranges.push({
-      from,
-      to,
-      color: lerpColor(PRICE_SCALE_LOW, PRICE_SCALE_HIGH, t),
-      name: `${from.toFixed(2)}–${to.toFixed(2)}`,
-    });
+    ranges.push({ from, to, color: priceColorAt(t), name: `${from.toFixed(2)}–${to.toFixed(2)}` });
   }
   return ranges;
 }
 
-// Builds diverging red -> stone -> green ranges, symmetric around zero
-export function buildProfitRanges(min, max, steps = 12) {
+// Discrete diverging red -> gray -> green ranges, symmetric around zero
+export function buildProfitRanges(min, max, steps = 10) {
   const absMax = Math.max(Math.abs(min), Math.abs(max), 1e-6);
   const span = absMax * 2;
   const ranges = [];
@@ -76,23 +91,37 @@ export function buildProfitRanges(min, max, steps = 12) {
     const to = -absMax + (span * (i + 1)) / steps;
     const mid = (from + to) / 2;
     const t = mid / absMax; // -1 .. 1
-    let color;
-    if (t < 0) {
-      color = lerpColor(PROFIT_SCALE_MID, PROFIT_SCALE_LOSS, Math.min(1, -t));
-    } else {
-      color = lerpColor(PROFIT_SCALE_MID, PROFIT_SCALE_GAIN, Math.min(1, t));
-    }
-    ranges.push({ from, to, color, name: `${from.toFixed(2)}–${to.toFixed(2)}` });
+    ranges.push({ from, to, color: profitColorAt(t), name: `${from.toFixed(2)}–${to.toFixed(2)}` });
   }
   return ranges;
 }
 
-// A smooth colorscale array for Plotly (0..1 stops) matching the price palette
-export function plotlyPriceColorscale(stepsCount = 10) {
+// CSS linear-gradient strings for the compact custom legend bar
+export function priceGradientCSS(stopsCount = 16) {
+  const stops = [];
+  for (let i = 0; i <= stopsCount; i++) {
+    const t = i / stopsCount;
+    stops.push(`${priceColorAt(t)} ${(t * 100).toFixed(1)}%`);
+  }
+  return `linear-gradient(to right, ${stops.join(', ')})`;
+}
+
+export function profitGradientCSS(stopsCount = 16) {
+  const stops = [];
+  for (let i = 0; i <= stopsCount; i++) {
+    const t = -1 + (2 * i) / stopsCount; // -1 .. 1
+    const pos = ((t + 1) / 2) * 100;
+    stops.push(`${profitColorAt(t)} ${pos.toFixed(1)}%`);
+  }
+  return `linear-gradient(to right, ${stops.join(', ')})`;
+}
+
+// A smooth colorscale array for Plotly (0..1 stops), same palette as the price heatmap
+export function plotlyPriceColorscale(stepsCount = 12) {
   const stops = [];
   for (let i = 0; i <= stepsCount; i++) {
     const t = i / stepsCount;
-    stops.push([t, lerpColor(PRICE_SCALE_LOW, PRICE_SCALE_HIGH, t)]);
+    stops.push([t, priceColorAt(t)]);
   }
   return stops;
 }

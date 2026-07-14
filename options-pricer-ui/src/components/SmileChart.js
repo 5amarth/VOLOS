@@ -17,8 +17,8 @@ export default function SmileChart({ data, maturityLabel, height = 340 }) {
           <CartesianGrid stroke="#2A2A3A" strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="strike"
-            stroke="#4A4438"
-            tick={{ fill: '#9A8E72', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+            stroke="#7A7059"
+            tick={{ fill: '#B3A688', fontSize: 10, fontWeight: 500, fontFamily: 'JetBrains Mono, monospace' }}
             tickFormatter={(v) => Number(v).toFixed(1)}
             interval="preserveStartEnd"
             angle={-35}
@@ -27,10 +27,10 @@ export default function SmileChart({ data, maturityLabel, height = 340 }) {
             tickMargin={8}
           />
           <YAxis
-            stroke="#4A4438"
-            tick={{ fill: '#9A8E72', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}
+            stroke="#7A7059"
+            tick={{ fill: '#B3A688', fontSize: 10, fontWeight: 500, fontFamily: 'JetBrains Mono, monospace' }}
             tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
-            label={{ value: 'Implied Vol', angle: -90, position: 'insideLeft', fill: '#9A8E72', fontSize: 10 }}
+            label={{ value: 'Implied Vol', angle: -90, position: 'insideLeft', fill: '#B3A688', fontSize: 10 }}
           />
           <Tooltip
             contentStyle={{ background: '#1C1C28', border: '1px solid #3D3D52', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}

@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import Chart from 'react-apexcharts';
-import { matrixMinMax, buildPriceRanges, buildProfitRanges } from '../utils/colorScale';
+import {
+  matrixMinMax, buildPriceRanges, buildProfitRanges, priceGradientCSS, profitGradientCSS,
+} from '../utils/colorScale';
 import './Heatmap.css';
 
 // matrix: 2D array, matrix[i][j] -> row i, col j
 // rowLabels / colLabels: arrays of numbers to label rows/cols
 // mode: 'price' | 'profit'
-export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTitle, colAxisTitle, height = 380 }) {
-  const { series, ranges } = useMemo(() => {
+export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTitle, colAxisTitle, height = 460 }) {
+  const { series, ranges, min, max } = useMemo(() => {
     const { min, max } = matrixMinMax(matrix);
     const colorRanges = mode === 'profit' ? buildProfitRanges(min, max) : buildPriceRanges(min, max);
 
@@ -19,14 +21,19 @@ export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTit
       })),
     }));
 
-    return { series: seriesData, ranges: colorRanges };
+    return { series: seriesData, ranges: colorRanges, min, max };
   }, [matrix, rowLabels, colLabels, mode]);
+
+  const gradientCSS = useMemo(
+    () => (mode === 'profit' ? profitGradientCSS() : priceGradientCSS()),
+    [mode]
+  );
 
   const options = useMemo(() => ({
     chart: {
       type: 'heatmap',
       background: 'transparent',
-      foreColor: '#9A8E72',
+      foreColor: '#B3A688',
       toolbar: { show: false },
       animations: { enabled: false },
     },
@@ -39,12 +46,13 @@ export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTit
     },
     dataLabels: {
       enabled: true,
-      style: { fontSize: '9px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, colors: ['#0A0A0F'] },
+      // Light, bold text with a soft shadow (see .heatmap-wrap CSS) reads cleanly
+      // against every cell color in the ramp, without a boxed/bordered look.
+      style: { fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, colors: ['#F5F0E4'] },
       formatter: (val) => Number(val).toFixed(2),
     },
     stroke: {
-      width: 1,
-      colors: ['#0A0A0F'],
+      width: 0,
     },
     grid: {
       show: false,
@@ -53,10 +61,10 @@ export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTit
     xaxis: {
       title: {
         text: colAxisTitle,
-        style: { color: '#9A8E72', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' },
+        style: { color: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 500 },
       },
       labels: {
-        style: { colors: '#9A8E72', fontFamily: 'JetBrains Mono, monospace', fontSize: '9px' },
+        style: { colors: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 500 },
         rotate: -45,
       },
       axisBorder: { color: '#2A2A3A' },
@@ -65,20 +73,15 @@ export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTit
     yaxis: {
       title: {
         text: rowAxisTitle,
-        style: { color: '#9A8E72', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px' },
+        style: { color: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 500 },
       },
       labels: {
-        style: { colors: '#9A8E72', fontFamily: 'JetBrains Mono, monospace', fontSize: '9px' },
+        style: { colors: '#B3A688', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 500 },
       },
     },
-    legend: {
-      show: true,
-      position: 'bottom',
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '9px',
-      labels: { colors: '#9A8E72' },
-      itemMargin: { horizontal: 4, vertical: 4 },
-    },
+    // The built-in per-range legend produced a cluttered, variable-height wall of
+    // swatches. A single compact gradient bar (below) replaces it consistently.
+    legend: { show: false },
     tooltip: {
       theme: 'dark',
       y: { formatter: (val) => Number(val).toFixed(6) },
@@ -88,6 +91,18 @@ export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTit
   return (
     <div className="heatmap-wrap">
       <Chart options={options} series={series} type="heatmap" height={height} />
+      <div className="heatmap-legend">
+        <div className="heatmap-legend-bar" style={{ background: gradientCSS }} />
+        <div className="heatmap-legend-labels">
+          <span className="heatmap-legend-label">
+            {mode === 'profit' ? `${min.toFixed(2)} loss` : min.toFixed(2)}
+          </span>
+          {mode === 'profit' && <span className="heatmap-legend-label heatmap-legend-label--mid">0</span>}
+          <span className="heatmap-legend-label">
+            {mode === 'profit' ? `${max.toFixed(2)} gain` : max.toFixed(2)}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

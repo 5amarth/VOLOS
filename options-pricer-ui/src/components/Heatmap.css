@@ -20,15 +20,44 @@
   border-bottom: 1px solid var(--border) !important;
 }
 
-.heatmap-wrap .apexcharts-legend-series {
-  margin: 2px 4px !important;
+/* Soft shadow behind each cell's value (instead of a hard stroke outline) keeps
+   the light label text readable against every color in the ramp without
+   looking like each number has its own little border/box. */
+.heatmap-wrap .apexcharts-datalabel {
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
 }
 
-/* Halo behind the value text inside each cell so dark text stays legible
-   against both the dark-purple and bright-cyan/green/red ends of the scale */
-.heatmap-wrap .apexcharts-datalabel {
-  paint-order: stroke fill;
-  stroke: rgba(255, 255, 255, 0.85);
-  stroke-width: 3px;
-  stroke-linejoin: round;
+/* ── Compact gradient legend (replaces ApexCharts' cluttered swatch legend) ── */
+.heatmap-legend {
+  margin-top: 1rem;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.heatmap-legend-bar {
+  height: 10px;
+  width: 100%;
+  border-radius: 3px;
+}
+
+.heatmap-legend-labels {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+
+.heatmap-legend-label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--vellum-dim);
+}
+
+.heatmap-legend-label--mid {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }

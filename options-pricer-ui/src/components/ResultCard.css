@@ -32,6 +32,7 @@
 .result-card-label {
   font-family: var(--font-mono);
   font-size: 0.58rem;
+  font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--vellum-dim);
