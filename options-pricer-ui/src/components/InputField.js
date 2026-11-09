@@ -19,6 +19,7 @@ export default function InputField({ label, name, value, onChange, hint, type = 
         value={value}
         onChange={onChange}
         placeholder={placeholder ?? ''}
+        required
         autoComplete="off"
       />
     </div>

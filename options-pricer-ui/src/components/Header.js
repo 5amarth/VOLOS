@@ -6,33 +6,17 @@ export default function Header() {
     <header className="header">
       <div className="header-inner">
         <div className="header-brand">
-          <div className="header-sigil">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              {/* Stylized sigma / volatility glyph */}
-              <polygon
-                points="8,8 40,8 24,24 40,40 8,40"
-                stroke="#C49A1E"
-                strokeWidth="1.5"
-                fill="none"
-                strokeLinejoin="round"
-              />
-              <line x1="8" y1="8" x2="8" y2="40" stroke="#C49A1E" strokeWidth="1.5" />
-              <circle cx="24" cy="24" r="2.5" fill="#C49A1E" />
-            </svg>
-          </div>
-          <div className="header-wordmark">
-            <span className="header-title">VOLOS</span>
-            <span className="header-subtitle">Options Pricing Engine</span>
-          </div>
+          <img className="header-sigil" src={`${process.env.PUBLIC_URL}/favicon.svg`} alt="" width="40" height="40" />
+          <span className="header-title">Volos</span>
+          <span className="header-subtitle">Options pricer</span>
         </div>
-        <div className="header-tag">
-          <span className="header-tag-text">Βόλος</span>
-        </div>
-      </div>
-      <div className="header-rule">
-        <span className="header-rule-line" />
-        <span className="header-rule-diamond">◆</span>
-        <span className="header-rule-line" />
+        <p className="server-notice">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+            <circle cx="10" cy="10" r="7.25" />
+            <path d="M10 5.8v4.4l2.6 1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          First run may take about a minute.
+        </p>
       </div>
     </header>
   );

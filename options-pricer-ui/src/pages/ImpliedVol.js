@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import ResultPlaceholder from '../components/ResultPlaceholder';
 import PageShell from '../components/PageShell';
 import InputField from '../components/InputField';
-import ResultCard from '../components/ResultCard';
 import { API_BASE } from '../config';
 import './Page.css';
 
@@ -19,7 +19,8 @@ export default function ImpliedVol() {
     setParams((p) => ({ ...p, [name]: value }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError(null);
     try {
@@ -30,7 +31,7 @@ export default function ImpliedVol() {
       const res = await fetch(`${API_BASE}/implied_volatility?${q}`);
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      setResult(data);
+      setResult({ value: data, isCall: optType });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -38,41 +39,39 @@ export default function ImpliedVol() {
     }
   };
 
-  const ivValue = result !== null && result !== undefined
-    ? typeof result === 'number'
-      ? isNaN(result) ? 'No solution found' : `${(result * 100).toFixed(4)}%`
-      : result
-    : null;
+  const ivValue = result && (
+    Number.isFinite(result.value) ? `${(result.value * 100).toFixed(4)}%` : 'No solution found'
+  );
 
   return (
     <PageShell
       title="Implied Volatility"
-      epigraph="Invert the oracle — given the price the market whispers, extract the fear it conceals within."
+      description="Find the volatility implied by a quoted option price."
     >
-      <section className="panel">
+      <form className="panel workspace-input" onSubmit={handleSubmit}>
         <div className="panel-header">
-          <span className="panel-label">Parameters</span>
+          <h2 className="panel-label">Parameters</h2>
         </div>
         <div className="input-grid">
-          <InputField label="Option Market Price" name="p" value={params.p} onChange={handleChange} hint="p" step="0.01" />
-          <InputField label="Spot Price" name="S_0" value={params.S_0} onChange={handleChange} hint="S₀" />
-          <InputField label="Strike Price" name="K" value={params.K} onChange={handleChange} hint="K" />
-          <InputField label="Maturity" name="T" value={params.T} onChange={handleChange} hint="years" step="0.01" />
-          <InputField label="Risk-Free Rate" name="r" value={params.r} onChange={handleChange} hint="e.g. 0.05" step="0.001" />
-          <InputField label="Div. Yield / Foreign Rate" name="q" value={params.q} onChange={handleChange} hint="q" step="0.001" />
+          <InputField label="Market price" name="p" value={params.p} onChange={handleChange} hint="p" />
+          <InputField label="Spot price" name="S_0" value={params.S_0} onChange={handleChange} hint="S₀" />
+          <InputField label="Strike price" name="K" value={params.K} onChange={handleChange} hint="K" />
+          <InputField label="Maturity" name="T" value={params.T} onChange={handleChange} hint="years" />
+          <InputField label="Risk-free rate" name="r" value={params.r} onChange={handleChange} hint="decimal" />
+          <InputField label="Dividend / foreign rate" name="q" value={params.q} onChange={handleChange} hint="decimal" />
         </div>
 
-        <div className="toggle-group">
-          <span className="toggle-label">Option Type</span>
+        <div className="toggle-group" role="group" aria-label="Option type">
+          <span className="toggle-label" aria-hidden="true">Option type</span>
           <div className="toggle-pills">
             <button
-              className={`toggle-pill ${optType === true ? 'toggle-pill--active' : ''}`}
+              type="button" className="toggle-pill" aria-pressed={optType === true}
               onClick={() => setOptType(true)}
             >
               Call
             </button>
             <button
-              className={`toggle-pill ${optType === false ? 'toggle-pill--active' : ''}`}
+              type="button" className="toggle-pill" aria-pressed={optType === false}
               onClick={() => setOptType(false)}
             >
               Put
@@ -80,23 +79,22 @@ export default function ImpliedVol() {
           </div>
         </div>
 
-        <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
-          {loading ? <span className="btn-loading">Solving…</span> : 'Solve for IV'}
+        <button className="submit-btn" type="submit" disabled={loading}>
+          {loading ? 'Solving…' : 'Solve for IV'}
         </button>
-        {error && <p className="error-msg">{error}</p>}
-      </section>
+        {error && <p className="error-msg" role="alert">{error}</p>}
+      </form>
 
+      {!result && <ResultPlaceholder loading={loading} prompt="Solve for the volatility implied by your inputs." />}
       {ivValue !== null && (
-        <section className="panel">
+        <section className="panel workspace-result" aria-label="Implied volatility result">
           <div className="panel-header">
-            <span className="panel-label">Result</span>
+            <h2 className="panel-label">Result</h2>
           </div>
-          <div className="iv-result-wrapper">
             <div className="iv-result-card">
               <span className="iv-result-label">Implied Volatility</span>
               <span className="iv-result-value">{ivValue}</span>
-              <span className="iv-result-type">{optType ? 'Call' : 'Put'} option</span>
-            </div>
+              <span className="iv-result-type">{result.isCall ? 'Call' : 'Put'} option</span>
           </div>
         </section>
       )}

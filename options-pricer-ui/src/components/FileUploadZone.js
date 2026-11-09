@@ -4,71 +4,72 @@ import './FileUploadZone.css';
 
 export default function FileUploadZone({ onParsed }) {
   const inputRef = useRef(null);
+  const uploadId = useRef(0);
   const [fileName, setFileName] = useState(null);
-  const [status, setStatus] = useState(null); // { kept, dropped } | { error }
+  const [status, setStatus] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleFile = async (file) => {
     if (!file) return;
+    const id = ++uploadId.current;
     setFileName(file.name);
     setStatus(null);
+    onParsed([]);
     try {
       const { matrix, keptCount, droppedCount } = await parseMarketDataFile(file);
+      if (id !== uploadId.current) return;
       onParsed(matrix);
       setStatus({ kept: keptCount, dropped: droppedCount });
     } catch (err) {
-      onParsed([]);
+      if (id !== uploadId.current) return;
       setStatus({ error: err.message || 'Could not parse file.' });
     }
   };
 
-  const handleInputChange = (e) => {
-    const file = e.target.files?.[0];
-    handleFile(file);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
+  const handleDrop = (event) => {
+    event.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    handleFile(file);
+    handleFile(event.dataTransfer.files?.[0]);
   };
 
   return (
     <div className="upload-zone-container">
-      <div
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        aria-label="Option quotes file"
+        onChange={(event) => {
+          handleFile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+        hidden
+      />
+      <button
+        type="button"
         className={`upload-zone ${isDragging ? 'upload-zone--dragging' : ''}`}
         onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          onChange={handleInputChange}
-          className="upload-zone-input"
-        />
-        <span className="upload-zone-icon">&#9670;</span>
-        <span className="upload-zone-text">
-          {fileName ? fileName : 'Drop a .csv or .xlsx file, or click to browse'}
-        </span>
-        <span className="upload-zone-hint">Columns required: Option Price, Strike, Maturity, Type</span>
-      </div>
+        <svg className="upload-zone-icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 15V4m-4 4 4-4 4 4M4 15v4h16v-4" />
+        </svg>
+        <span className="upload-zone-text">{fileName || 'Drop a spreadsheet here or choose a file'}</span>
+        <span className="upload-zone-hint">CSV, XLSX, or XLS. Include option price, strike, maturity, and type.</span>
+      </button>
 
       {status && !status.error && (
-        <p className="upload-zone-status">
+        <p className="upload-zone-status" role="status">
           Parsed <strong>{status.kept}</strong> row{status.kept !== 1 ? 's' : ''}
-          {status.dropped > 0 && <> &mdash; dropped {status.dropped} invalid row{status.dropped !== 1 ? 's' : ''}</>}
+          {status.dropped > 0 && <> and skipped {status.dropped} invalid row{status.dropped !== 1 ? 's' : ''}</>}.
         </p>
       )}
-      {status && status.error && (
-        <p className="upload-zone-status upload-zone-status--error">{status.error}</p>
-      )}
+      {status?.error && <p className="upload-zone-status upload-zone-status--error" role="alert">{status.error}</p>}
 
       <button type="button" className="upload-zone-template" onClick={downloadSampleTemplate}>
-        Download sample template CSV
+        Download sample CSV
       </button>
     </div>
   );

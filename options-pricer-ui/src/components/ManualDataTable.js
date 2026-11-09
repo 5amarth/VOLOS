@@ -4,80 +4,67 @@ import './ManualDataTable.css';
 let rowIdCounter = 0;
 const nextRowId = () => `row_${rowIdCounter++}`;
 
+const FIELDS = [
+  { name: 'price', label: 'Option price', placeholder: '12.50' },
+  { name: 'strike', label: 'Strike', placeholder: '105' },
+  { name: 'maturity', label: 'Maturity (yrs)', placeholder: '0.50' },
+];
+
 export function makeEmptyRow() {
   return { id: nextRowId(), price: '', strike: '', maturity: '', type: '0' };
 }
 
 export default function ManualDataTable({ rows, onChange }) {
   const updateRow = (id, field, value) => {
-    onChange(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
-  };
-
-  const removeRow = (id) => {
-    onChange(rows.filter((r) => r.id !== id));
-  };
-
-  const addRow = () => {
-    onChange([...rows, makeEmptyRow()]);
+    onChange(rows.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   };
 
   return (
     <div className="manual-table-wrap">
-      <div className="manual-table">
-        <div className="manual-table-header">
-          <span>Option Price</span>
-          <span>Strike</span>
-          <span>Maturity (yrs)</span>
-          <span>Type</span>
-          <span />
-        </div>
-        {rows.map((row) => (
-          <div className="manual-table-row" key={row.id}>
-            <input
-              className="manual-table-input"
-              type="number"
-              step="any"
-              placeholder="12.50"
-              value={row.price}
-              onChange={(e) => updateRow(row.id, 'price', e.target.value)}
-            />
-            <input
-              className="manual-table-input"
-              type="number"
-              step="any"
-              placeholder="105"
-              value={row.strike}
-              onChange={(e) => updateRow(row.id, 'strike', e.target.value)}
-            />
-            <input
-              className="manual-table-input"
-              type="number"
-              step="any"
-              placeholder="0.50"
-              value={row.maturity}
-              onChange={(e) => updateRow(row.id, 'maturity', e.target.value)}
-            />
+      <div className="manual-table-header" aria-hidden="true">
+        {FIELDS.map(({ name, label }) => <span key={name}>{label}</span>)}
+        <span>Type</span>
+      </div>
+      {rows.map((row, index) => (
+        <div className="manual-table-row" key={row.id}>
+          {FIELDS.map(({ name, label, placeholder }) => (
+            <label className="manual-table-cell" key={name}>
+              <span className="manual-table-mobile-label" aria-hidden="true">{label}</span>
+              <input
+                className="manual-table-input"
+                type="number"
+                step="any"
+                placeholder={placeholder}
+                value={row[name]}
+                aria-label={`Row ${index + 1}, ${label}`}
+                onChange={(event) => updateRow(row.id, name, event.target.value)}
+              />
+            </label>
+          ))}
+          <label className="manual-table-cell">
+            <span className="manual-table-mobile-label" aria-hidden="true">Type</span>
             <select
               className="manual-table-select"
               value={row.type}
-              onChange={(e) => updateRow(row.id, 'type', e.target.value)}
+              aria-label={`Row ${index + 1}, option type`}
+              onChange={(event) => updateRow(row.id, 'type', event.target.value)}
             >
               <option value="0">Call</option>
               <option value="1">Put</option>
             </select>
-            <button
-              className="manual-table-remove"
-              onClick={() => removeRow(row.id)}
-              aria-label="Remove row"
-              type="button"
-            >
-              &times;
-            </button>
-          </div>
-        ))}
-      </div>
-      <button className="manual-table-add" onClick={addRow} type="button">
-        + Add Row
+          </label>
+          <button
+            className="manual-table-remove"
+            onClick={() => onChange(rows.filter((item) => item.id !== row.id))}
+            aria-label={`Remove row ${index + 1}`}
+            type="button"
+          >
+            &times;
+          </button>
+        </div>
+      ))}
+      <button className="manual-table-add" onClick={() => onChange([...rows, makeEmptyRow()])} type="button">
+        + Add row
       </button>
     </div>
   );

@@ -1,87 +1,35 @@
-.header {
-  padding: 2rem 2rem 0;
-  max-width: 1100px;
-  margin: 0 auto;
-  width: 100%;
-}
+.header { border-bottom: 1px solid var(--line); }
 
 .header-inner {
+  max-width: var(--frame);
+  margin-inline: auto;
+  padding: 17px var(--gutter);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding-bottom: 1.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
 }
 
-.header-brand {
+.header-brand, .server-notice {
   display: flex;
   align-items: center;
-  gap: 1rem;
 }
 
-.header-sigil {
-  width: 44px;
-  height: 44px;
-  opacity: 0.9;
-  filter: drop-shadow(0 0 8px rgba(196, 154, 30, 0.3));
-}
-
-.header-wordmark {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.header-title {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: 0.35em;
-  color: var(--bronze-glow);
-  line-height: 1;
-  text-shadow: 0 0 30px rgba(212, 168, 32, 0.2);
-}
-
+.header-brand { gap: 11px; }
+.header-sigil { display: block; flex-shrink: 0; }
+.header-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.045em; }
 .header-subtitle {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.25em;
-  color: var(--vellum-dim);
-  text-transform: uppercase;
+  margin-left: 3px;
+  padding-left: 14px;
+  border-left: 1px solid var(--line-strong);
+  color: var(--muted);
+  font-size: 0.8125rem;
 }
 
-.header-tag {
-  text-align: right;
-}
+.server-notice { gap: 7px; color: var(--quiet); font-size: 0.8125rem; }
+.server-notice svg { flex-shrink: 0; color: var(--accent); }
 
-.header-tag-text {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 1.2rem;
-  color: var(--bronze-bright);
-  opacity: 0.8;
-  letter-spacing: 0.05em;
-}
-
-.header-rule {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-bottom: 0;
-}
-
-.header-rule-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
-}
-
-.header-rule-diamond {
-  font-size: 0.45rem;
-  color: var(--bronze);
-  line-height: 1;
-}
-
-@media (max-width: 600px) {
-  .header-title { font-size: 1.5rem; letter-spacing: 0.2em; }
-  .header-tag { display: none; }
+@media (max-width: 540px) {
+  .header-inner { padding-block: 12px; }
 }

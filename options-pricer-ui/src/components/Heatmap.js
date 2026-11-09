@@ -1,102 +1,94 @@
 import React, { useMemo, useState } from 'react';
 import {
   matrixMinMax, buildPriceRanges, buildProfitRanges,
-  priceBucketIndex, profitBucketIndex,
-  priceGradientCSS, profitGradientCSS, HEATMAP_STEPS,
+  priceBucketIndex, profitBucketIndex, profitColorAt,
 } from '../utils/colorScale';
 import './Heatmap.css';
 
-// matrix: 2D array, matrix[i][j] -> row i, col j
-// rowLabels / colLabels: arrays of numbers to label rows/cols
-// mode: 'price' | 'profit'
+// The color scales use HSL. Pick the foreground by relative luminance so
+// both the deepest purples and the brightest cyans keep legible cell values.
+function foreground(color) {
+  const [hue, saturation, lightness] = color.match(/[\d.]+/g).map(Number);
+  const light = lightness / 100;
+  const amplitude = (saturation / 100) * Math.min(light, 1 - light);
+  const [r, g, b] = [0, 8, 4].map((offset) => {
+    const k = (offset + hue / 30) % 12;
+    const channel = light - amplitude * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.179 ? '#000' : '#fff';
+}
+
 export default function Heatmap({ matrix, rowLabels, colLabels, mode, rowAxisTitle, colAxisTitle }) {
   const [hoveredBucket, setHoveredBucket] = useState(null);
+  const isProfit = mode === 'profit';
 
   const { min, max, ranges } = useMemo(() => {
     const { min, max } = matrixMinMax(matrix);
-    const ranges = mode === 'profit' ? buildProfitRanges(min, max) : buildPriceRanges(min, max);
+    const scale = isProfit ? buildProfitRanges(min, max) : buildPriceRanges(min, max);
+    const ranges = (isProfit && min === 0 && max === 0 ? [{ color: profitColorAt(0) }] : scale)
+      .map(({ color, from, to }) => ({ color, from, to, textColor: foreground(color) }));
     return { min, max, ranges };
-  }, [matrix, mode]);
+  }, [matrix, isProfit]);
 
-  const bucketOf = (value) => (
-    mode === 'profit' ? profitBucketIndex(value, min, max) : priceBucketIndex(value, min, max)
-  );
-
-  const gradientCSS = useMemo(
-    () => (mode === 'profit' ? profitGradientCSS() : priceGradientCSS()),
-    [mode]
-  );
-
-  const handleLegendMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const bucket = Math.max(0, Math.min(HEATMAP_STEPS - 1, Math.floor(fraction * HEATMAP_STEPS)));
-    setHoveredBucket(bucket);
+  const bucketOf = (value) => {
+    if (ranges.length === 1) return 0;
+    return isProfit ? profitBucketIndex(value, min, max) : priceBucketIndex(value, min, max);
   };
 
-  const numCols = colLabels.length;
+  const low = isProfit ? ranges[0].from : min;
+  const high = isProfit ? ranges[ranges.length - 1].to : max;
 
   return (
     <div className="heatmap-wrap">
-      <div className="heatmap-body">
-        <div className="heatmap-yaxis-title">{rowAxisTitle}</div>
-
-        <div className="heatmap-scroll">
-          <div
-            className="heatmap-grid"
-            style={{ gridTemplateColumns: `72px repeat(${numCols}, minmax(50px, 1fr))` }}
-          >
+      <div className="heatmap-xaxis-title">{colAxisTitle}</div>
+      <div className="heatmap-scroll" role="region" aria-label={`${isProfit ? 'Profit' : 'Price'} by spot price and volatility`} tabIndex={0}>
+        <table className="heatmap-grid">
+          <thead>
+            <tr>
+              <th className="heatmap-corner" scope="col">{rowAxisTitle}</th>
+              {colLabels.map((value, j) => <th scope="col" key={j}>{value.toFixed(3)}</th>)}
+            </tr>
+          </thead>
+          <tbody>
             {matrix.map((row, i) => (
-              <React.Fragment key={i}>
-                <div className="heatmap-row-label">{rowLabels[i] !== undefined ? rowLabels[i].toFixed(2) : i}</div>
+              <tr key={i}>
+                <th scope="row" className="heatmap-row-label">{rowLabels[i].toFixed(2)}</th>
                 {row.map((value, j) => {
                   const bucket = bucketOf(value);
-                  const isHighlighted = hoveredBucket !== null && bucket === hoveredBucket;
-                  const isDimmed = hoveredBucket !== null && bucket !== hoveredBucket;
+                  const { color, textColor } = ranges[bucket];
                   return (
-                    <div
+                    <td
                       key={j}
-                      className={[
-                        'heatmap-cell',
-                        isHighlighted ? 'heatmap-cell--highlighted' : '',
-                        isDimmed ? 'heatmap-cell--dimmed' : '',
-                      ].join(' ').trim()}
-                      style={{ background: ranges[bucket]?.color }}
-                      title={value.toFixed(6)}
+                      className={hoveredBucket !== null && bucket !== hoveredBucket ? 'heatmap-cell--dimmed' : undefined}
+                      style={{ background: color, color: textColor }}
+                      title={`${rowAxisTitle} ${rowLabels[i].toFixed(2)}, ${colAxisTitle.toLowerCase()} ${colLabels[j].toFixed(4)}: ${value.toFixed(6)}`}
                     >
                       {value.toFixed(2)}
-                    </div>
+                    </td>
                   );
                 })}
-              </React.Fragment>
+              </tr>
             ))}
-
-            <div className="heatmap-corner" />
-            {colLabels.map((c, j) => (
-              <div className="heatmap-col-label" key={j}>{c.toFixed(3)}</div>
-            ))}
-          </div>
-        </div>
+          </tbody>
+        </table>
       </div>
 
-      <div className="heatmap-xaxis-title">{colAxisTitle}</div>
-
       <div className="heatmap-legend">
-        <div
-          className="heatmap-legend-bar"
-          style={{ background: gradientCSS }}
-          onMouseMove={handleLegendMove}
-          onMouseLeave={() => setHoveredBucket(null)}
-        />
-        <div className="heatmap-legend-labels">
-          <span className="heatmap-legend-label">
-            {mode === 'profit' ? `${min.toFixed(2)} loss` : min.toFixed(2)}
-          </span>
-          {mode === 'profit' && <span className="heatmap-legend-label heatmap-legend-label--mid">0</span>}
-          <span className="heatmap-legend-label">
-            {mode === 'profit' ? `${max.toFixed(2)} gain` : max.toFixed(2)}
-          </span>
+        <div className="heatmap-legend-bar" onMouseLeave={() => setHoveredBucket(null)} aria-hidden="true">
+          {ranges.map(({ color }, index) => (
+            <span key={index} style={{ background: color }} onMouseEnter={() => setHoveredBucket(index)} />
+          ))}
         </div>
+        {ranges.length === 1 ? (
+          <div className="heatmap-legend-labels"><span>{min.toFixed(2)} throughout</span></div>
+        ) : (
+          <div className="heatmap-legend-labels">
+            <span>{low.toFixed(2)}{isProfit && ' loss'}</span>
+            {isProfit && <span className="heatmap-legend-label--mid">0</span>}
+            <span>{isProfit && '+'}{high.toFixed(2)}{isProfit && ' gain'}</span>
+          </div>
+        )}
       </div>
     </div>
   );

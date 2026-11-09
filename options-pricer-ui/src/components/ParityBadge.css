@@ -1,44 +1,14 @@
 .parity-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.65rem;
-  border-radius: 2px;
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.05em;
+  gap: 6px;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
-.parity-badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.parity-badge-label {
-  color: var(--vellum-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.58rem;
-  font-weight: 500;
-}
-
-.parity-badge-value {
-  font-weight: 600;
-}
-
-.parity-badge--ok {
-  border-color: rgba(79, 143, 105, 0.4);
-  background: rgba(79, 143, 105, 0.08);
-}
-.parity-badge--ok .parity-badge-dot { background: #4F8F69; box-shadow: 0 0 2px rgba(79, 143, 105, 0.4); }
-.parity-badge--ok .parity-badge-value { color: #8FBF9F; }
-
-.parity-badge--warn {
-  border-color: rgba(179, 90, 74, 0.5);
-  background: rgba(179, 90, 74, 0.1);
-}
-.parity-badge--warn .parity-badge-dot { background: #B3574A; box-shadow: 0 0 2px rgba(179, 90, 74, 0.4); }
-.parity-badge--warn .parity-badge-value { color: #CB8F84; }
+.parity-badge--warn { color: #f4c18b; }
+.parity-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.parity-badge-value { font-family: var(--font-data); }

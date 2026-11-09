@@ -41,23 +41,23 @@ export default function PathsChart({ paths, S_0, T, height = 380 }) {
       <div className="chart-wrap" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-            <CartesianGrid stroke="#2A2A3A" strokeDasharray="2 4" vertical={false} />
+            <CartesianGrid stroke="#2c2634" strokeDasharray="2 4" vertical={false} />
             <XAxis
               dataKey="time"
               tickFormatter={(v) => v.toFixed(2)}
-              stroke="#7A7059"
-              tick={{ fill: '#B3A688', fontSize: 10, fontWeight: 500, fontFamily: 'JetBrains Mono, monospace' }}
-              label={{ value: 'Time (years)', position: 'insideBottom', offset: -4, fill: '#B3A688', fontSize: 10 }}
+              stroke="#9c91a5"
+              tick={{ fill: '#b5aabd', fontSize: 10, fontWeight: 500, fontFamily: 'Menlo, Consolas, monospace' }}
+              label={{ value: 'Time (years)', position: 'insideBottom', offset: -4, fill: '#b5aabd', fontSize: 10 }}
             />
             <YAxis
-              stroke="#7A7059"
-              tick={{ fill: '#B3A688', fontSize: 10, fontWeight: 500, fontFamily: 'JetBrains Mono, monospace' }}
-              label={{ value: 'Stock Price', angle: -90, position: 'insideLeft', fill: '#B3A688', fontSize: 10 }}
+              stroke="#9c91a5"
+              tick={{ fill: '#b5aabd', fontSize: 10, fontWeight: 500, fontFamily: 'Menlo, Consolas, monospace' }}
+              label={{ value: 'Stock Price', angle: -90, position: 'insideLeft', fill: '#b5aabd', fontSize: 10 }}
               domain={['auto', 'auto']}
             />
             <Tooltip
-              contentStyle={{ background: '#1C1C28', border: '1px solid #3D3D52', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}
-              labelStyle={{ color: '#D4A820' }}
+              contentStyle={{ background: '#1c1724', border: '1px solid #41374d', fontFamily: 'Menlo, Consolas, monospace', fontSize: '11px' }}
+              labelStyle={{ color: '#ba9aff' }}
               formatter={(value) => [Number(value).toFixed(4), 'Price']}
               labelFormatter={(v) => `t = ${Number(v).toFixed(3)}y`}
             />

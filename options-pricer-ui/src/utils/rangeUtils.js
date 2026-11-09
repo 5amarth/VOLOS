@@ -11,12 +11,16 @@ export function computeProportionalBounds(rawValue, pct = 0.15, fallbackMin = 1,
   if (!Number.isFinite(value) || value <= 0) {
     return { min: fallbackMin, max: fallbackMax };
   }
-  return {
-    min: round(value * (1 - pct), decimals),
-    max: round(value * (1 + pct), decimals),
-  };
+  const min = value * (1 - pct);
+  const max = value * (1 + pct);
+  const roundedMin = round(min, decimals);
+  const roundedMax = round(max, decimals);
+  return roundedMin > 0 && roundedMax > roundedMin
+    ? { min: roundedMin, max: roundedMax }
+    : { min, max };
 }
 
 export function computeStep(min, max, divisions = 150, minStep = 0.0001) {
-  return Math.max(minStep, (max - min) / divisions);
+  const span = max - min;
+  return span / Math.max(1, Math.min(divisions, Math.floor(span / minStep)));
 }

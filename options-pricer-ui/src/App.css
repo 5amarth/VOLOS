@@ -6,95 +6,24 @@
 
 .app-main {
   flex: 1;
-  max-width: 1100px;
   width: 100%;
-  margin: 0 auto;
-  padding: 2.5rem 2rem 4rem;
+  max-width: var(--frame);
+  margin-inline: auto;
+  padding: clamp(32px, 5vw, 62px) var(--gutter) 64px;
 }
 
-.app-footer {
-  border-top: 1px solid var(--border);
-  padding: 1.25rem 2rem;
-}
+.app-footer { border-top: 1px solid var(--line); }
 
 .app-footer-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 24px;
+  max-width: var(--frame);
+  margin-inline: auto;
+  padding: 18px var(--gutter);
+  color: var(--quiet);
+  font-size: 0.8125rem;
 }
 
-.footer-credit {
-  position: absolute;
-  right: 0;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.05em;
-  color: var(--vellum-faint);
-  text-transform: lowercase;
-}
-
-@media (max-width: 700px) {
-  .app-footer-inner {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
-  }
-  .footer-credit {
-    position: static;
-  }
-}
-
-.page-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 0;
-}
-
-.page-loading-text {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.95rem;
-  color: var(--vellum-faint);
-  letter-spacing: 0.03em;
-}
-
-.server-notice {
-  max-width: 1100px;
-  margin: 0.75rem auto 0;
-  padding: 0 2rem;
-  text-align: center;
-}
-
-.server-notice-text {
-  display: inline-block;
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.8rem;
-  color: var(--vellum-dim);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 0.5rem 1.25rem;
-}
-
-@media (max-width: 600px) {
-  .server-notice { padding: 0 1rem; }
-  .server-notice-text { font-size: 0.72rem; padding: 0.5rem 0.85rem; }
-}
-
-.footer-text {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  color: var(--vellum-faint);
-  text-transform: uppercase;
-}
-
-@media (max-width: 768px) {
-  .app-main {
-    padding: 1.5rem 1rem 3rem;
-  }
-}
+.page-loading { color: var(--muted); padding-block: 24px; }

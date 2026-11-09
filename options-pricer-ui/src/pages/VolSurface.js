@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import ResultPlaceholder from '../components/ResultPlaceholder';
 import PageShell from '../components/PageShell';
 import InputField from '../components/InputField';
 import ManualDataTable, { makeEmptyRow } from '../components/ManualDataTable';
@@ -39,7 +40,8 @@ export default function VolSurface() {
     return matrix;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError(null);
     const matrix = mode === 'manual' ? buildManualMatrix() : uploadedMatrix;
 
@@ -87,60 +89,76 @@ export default function VolSurface() {
   return (
     <PageShell
       title="IV Interpolator"
-      epigraph="Beneath every quoted price lies a hidden slope — strike against time, fear rendered in three dimensions."
+      description="Build an implied-volatility surface from out-of-the-money option quotes."
     >
-      <section className="panel">
-        <div className="panel-header">
-          <span className="panel-label">Market Parameters</span>
-        </div>
-        <div className="input-grid">
-          <InputField label="Spot Price" name="S_0" value={params.S_0} onChange={handleParamChange} hint="S₀" />
-          <InputField label="Risk-Free Rate" name="r" value={params.r} onChange={handleParamChange} hint="e.g. 0.05" step="0.001" />
-          <InputField label="Div. Yield / Foreign Rate" name="q" value={params.q} onChange={handleParamChange} hint="q" step="0.001" />
-          <InputField label="Grid Resolution" name="grid_resolution" value={params.grid_resolution} onChange={handleParamChange} hint="integer" step="1" min="2" />
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header">
-          <span className="panel-label">Option Chain Data</span>
-        </div>
-
-        <div className="mode-toggle-wrap">
-          <div className="toggle-pills">
-            <button
-              className={`toggle-pill ${mode === 'manual' ? 'toggle-pill--active' : ''}`}
-              onClick={() => setMode('manual')}
-            >
-              Manual Entry
-            </button>
-            <button
-              className={`toggle-pill ${mode === 'upload' ? 'toggle-pill--active' : ''}`}
-              onClick={() => setMode('upload')}
-            >
-              File Upload
-            </button>
+      <form className="workspace-input" onSubmit={handleSubmit}>
+        <section className="panel">
+          <div className="panel-header">
+            <h2 className="panel-label">Market parameters</h2>
           </div>
-        </div>
+          <div className="input-grid">
+            <InputField label="Spot price" name="S_0" value={params.S_0} onChange={handleParamChange} hint="S₀" />
+            <InputField label="Risk-free rate" name="r" value={params.r} onChange={handleParamChange} hint="decimal" />
+            <InputField label="Dividend / foreign rate" name="q" value={params.q} onChange={handleParamChange} hint="decimal" />
+            <InputField label="Grid resolution" name="grid_resolution" value={params.grid_resolution} onChange={handleParamChange} hint="integer" step="1" min="2" />
+          </div>
+        </section>
 
-        {mode === 'manual' ? (
-          <ManualDataTable rows={manualRows} onChange={setManualRows} />
-        ) : (
-          <FileUploadZone onParsed={setUploadedMatrix} />
-        )}
+        <section className="panel">
+          <div className="panel-header">
+            <h2 className="panel-label">Option quotes</h2>
+          </div>
+          <p className="panel-subtext">Use out-of-the-money quotes across several strikes and maturities.</p>
 
-        <button className="submit-btn" onClick={handleSubmit} disabled={loading} style={{ marginTop: '1.5rem' }}>
-          {loading ? <span className="btn-loading">Interpolating…</span> : 'Build Surface'}
-        </button>
-        {error && <p className="error-msg">{error}</p>}
-      </section>
+          <div className="mode-toggle-wrap">
+            <div className="toggle-pills" role="group" aria-label="Data input method">
+              <button
+                type="button" className="toggle-pill" aria-pressed={mode === 'manual'}
+                onClick={() => setMode('manual')}
+              >
+                Manual entry
+              </button>
+              <button
+                type="button" className="toggle-pill" aria-pressed={mode === 'upload'}
+                onClick={() => setMode('upload')}
+              >
+                File upload
+              </button>
+            </div>
+          </div>
 
+          {mode === 'manual' && <ManualDataTable rows={manualRows} onChange={setManualRows} />}
+          <div hidden={mode !== 'upload'}>
+            <FileUploadZone onParsed={setUploadedMatrix} />
+          </div>
+
+          <button className="submit-btn" type="submit" disabled={loading}>
+            {loading ? 'Interpolating…' : 'Build surface'}
+          </button>
+          {error && <p className="error-msg" role="alert">{error}</p>}
+        </section>
+      </form>
+
+      {!results && <ResultPlaceholder loading={loading} prompt="Add option quotes and build the surface to see the results." />}
       {results && (
         <>
+          <section className="panel workspace-result" aria-label="Surface coverage">
+            <div className="panel-header"><h2 className="panel-label">Surface coverage</h2></div>
+            <div className="result-grid">
+              <div className="result-card">
+                <span className="result-card-label">Strike range</span>
+                <span className="result-card-value">{results.X_Strikes[0].toFixed(2)}–{results.X_Strikes.at(-1).toFixed(2)}</span>
+              </div>
+              <div className="result-card">
+                <span className="result-card-label">Maturity range</span>
+                <span className="result-card-value">{results.Y_Maturities[0].toFixed(2)}–{results.Y_Maturities.at(-1).toFixed(2)} yr</span>
+              </div>
+            </div>
+          </section>
           <section className="panel">
             <div className="panel-header">
-              <span className="panel-label">Implied Volatility Surface</span>
-              <span className="panel-meta">{params.grid_resolution}×{params.grid_resolution} grid</span>
+              <h2 className="panel-label">Implied volatility surface</h2>
+              <span className="panel-meta">{results.X_Strikes.length}×{results.Y_Maturities.length} grid</span>
             </div>
             <VolSurfacePlot
               xStrikes={results.X_Strikes}
@@ -151,7 +169,7 @@ export default function VolSurface() {
 
           <section className="panel">
             <div className="panel-header">
-              <span className="panel-label">Volatility Smile</span>
+              <h2 className="panel-label">Volatility smile</h2>
             </div>
             <div className="input-grid" style={{ marginBottom: '1.25rem' }}>
               <div className="input-field">

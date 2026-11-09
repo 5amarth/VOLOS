@@ -14,11 +14,11 @@ export default function SmileChart({ data, maturityLabel, height = 340 }) {
     <div className="chart-wrap" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 20 }}>
-          <CartesianGrid stroke="#2A2A3A" strokeDasharray="2 4" vertical={false} />
+          <CartesianGrid stroke="#2c2634" strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="strike"
-            stroke="#7A7059"
-            tick={{ fill: '#B3A688', fontSize: 10, fontWeight: 500, fontFamily: 'JetBrains Mono, monospace' }}
+            stroke="#9c91a5"
+            tick={{ fill: '#b5aabd', fontSize: 10, fontWeight: 500, fontFamily: 'Menlo, Consolas, monospace' }}
             tickFormatter={(v) => Number(v).toFixed(1)}
             interval="preserveStartEnd"
             angle={-35}
@@ -27,23 +27,23 @@ export default function SmileChart({ data, maturityLabel, height = 340 }) {
             tickMargin={8}
           />
           <YAxis
-            stroke="#7A7059"
-            tick={{ fill: '#B3A688', fontSize: 10, fontWeight: 500, fontFamily: 'JetBrains Mono, monospace' }}
+            stroke="#9c91a5"
+            tick={{ fill: '#b5aabd', fontSize: 10, fontWeight: 500, fontFamily: 'Menlo, Consolas, monospace' }}
             tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
-            label={{ value: 'Implied Vol', angle: -90, position: 'insideLeft', fill: '#B3A688', fontSize: 10 }}
+            label={{ value: 'Implied Vol', angle: -90, position: 'insideLeft', fill: '#b5aabd', fontSize: 10 }}
           />
           <Tooltip
-            contentStyle={{ background: '#1C1C28', border: '1px solid #3D3D52', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}
-            labelStyle={{ color: '#D4A820' }}
+            contentStyle={{ background: '#1c1724', border: '1px solid #41374d', fontFamily: 'Menlo, Consolas, monospace', fontSize: '11px' }}
+            labelStyle={{ color: '#ba9aff' }}
             formatter={(value) => [`${(Number(value) * 100).toFixed(3)}%`, 'Implied Vol']}
             labelFormatter={(v) => `Strike ${Number(v).toFixed(2)}`}
           />
           <Line
             type="monotone"
             dataKey="iv"
-            stroke="#C49A1E"
+            stroke="#ba9aff"
             strokeWidth={2}
-            dot={{ r: 3, fill: '#C49A1E', strokeWidth: 0 }}
+            dot={{ r: 3, fill: '#ba9aff', strokeWidth: 0 }}
             isAnimationActive={false}
           />
         </LineChart>

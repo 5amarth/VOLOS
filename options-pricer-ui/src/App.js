@@ -3,65 +3,33 @@ import './App.css';
 import Header from './components/Header';
 import TabNav from './components/TabNav';
 
-// Lazy-loaded so each tab's heavier dependencies (Recharts, Plotly) only
-// download when that tab is actually opened, instead of bloating the initial
-// page load for everyone.
-const BinomialTree = lazy(() => import('./pages/BinomialTree'));
-const BlackScholes = lazy(() => import('./pages/BlackScholes'));
-const ImpliedVol = lazy(() => import('./pages/ImpliedVol'));
-const VolSurface = lazy(() => import('./pages/VolSurface'));
-const MonteCarlo = lazy(() => import('./pages/MonteCarlo'));
-
 const TABS = [
-  { id: 'binomial',   label: 'Binomial Tree',       roman: 'I'   },
-  { id: 'bsm',        label: 'Black–Scholes',        roman: 'II'  },
-  { id: 'impliedvol', label: 'Implied Volatility',   roman: 'III' },
-  { id: 'volsurface', label: 'IV Interpolator',      roman: 'IV'  },
-  { id: 'montecarlo', label: 'Monte Carlo',          roman: 'V'   },
+  { id: 'binomial', label: 'Binomial Tree', Page: lazy(() => import('./pages/BinomialTree')) },
+  { id: 'bsm', label: 'Black–Scholes', Page: lazy(() => import('./pages/BlackScholes')) },
+  { id: 'impliedvol', label: 'Implied Volatility', Page: lazy(() => import('./pages/ImpliedVol')) },
+  { id: 'volsurface', label: 'IV Interpolator', Page: lazy(() => import('./pages/VolSurface')) },
+  { id: 'montecarlo', label: 'Monte Carlo', Page: lazy(() => import('./pages/MonteCarlo')) },
 ];
 
-function PageLoadingFallback() {
-  return (
-    <div className="page-loading">
-      <span className="page-loading-text">Consulting the tables&hellip;</span>
-    </div>
-  );
-}
-
 export default function App() {
-  const [activeTab, setActiveTab] = useState('binomial');
-
-  const renderPage = () => {
-    switch (activeTab) {
-      case 'binomial':   return <BinomialTree />;
-      case 'bsm':        return <BlackScholes />;
-      case 'impliedvol': return <ImpliedVol />;
-      case 'volsurface': return <VolSurface />;
-      case 'montecarlo': return <MonteCarlo />;
-      default:           return <BinomialTree />;
-    }
-  };
+  const [activeTab, setActiveTab] = useState(TABS[0].id);
+  const { Page } = TABS.find((tab) => tab.id === activeTab);
 
   return (
     <div className="app">
       <Header />
-      <div className="server-notice">
-        <span className="server-notice-text">
-          This site is hosted on a free server — the first calculation may take up to a minute to wake it up.
-        </span>
-      </div>
       <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="app-main">
-        <Suspense fallback={<PageLoadingFallback />}>
-          {renderPage()}
-        </Suspense>
+        <div role="tabpanel" id={`model-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
+          <Suspense fallback={<p className="page-loading" role="status">Loading model…</p>}>
+            <Page />
+          </Suspense>
+        </div>
       </main>
       <footer className="app-footer">
         <div className="app-footer-inner">
-          <span className="footer-text">
-            VOLOS &mdash; Pricing instruments of the ancient art
-          </span>
-          <span className="footer-credit">built by samarth tanigere</span>
+          <span>Volos Options Pricer</span>
+          <span>Built by Samarth Tanigere</span>
         </div>
       </footer>
     </div>

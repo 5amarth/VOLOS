@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import ResultPlaceholder from '../components/ResultPlaceholder';
 import PageShell from '../components/PageShell';
 import InputField from '../components/InputField';
 import ResultCard from '../components/ResultCard';
 import DualRangeSlider from '../components/DualRangeSlider';
-import Heatmap from '../components/Heatmap';
+import PricingHeatmaps from '../components/PricingHeatmaps';
+import GreeksTable from '../components/GreeksTable';
 import PathsChart from '../components/PathsChart';
 import { API_BASE } from '../config';
 import { computeProportionalBounds, computeStep } from '../utils/rangeUtils';
@@ -13,17 +15,6 @@ const INITIAL = {
   S_0: 100, K: 100, T: 1, r: 0.05, sigma: 0.2, q: 0, N: 252, N2: 10000,
 };
 const RANGE_PCT = 0.15;
-
-const GREEK_GROUPS = [
-  { label: 'Delta', callKey: 'EU Call Delta', putKey: 'EU Put Delta' },
-  { label: 'Gamma', callKey: 'EU Call Gamma', putKey: 'EU Put Gamma' },
-  { label: 'Vega',  callKey: 'EU Call Vega',  putKey: 'EU Put Vega'  },
-  { label: 'Theta', callKey: 'EU Call Theta', putKey: 'EU Put Theta' },
-  { label: 'Rho',   callKey: 'EU Call Rho',   putKey: 'EU Put Rho'   },
-];
-
-const HEATMAP_OPTIONS = ['EU Call', 'EU Put'];
-const HEATMAP_METRICS = ['Price', 'Profit'];
 
 export default function MonteCarlo() {
   const [params, setParams] = useState(INITIAL);
@@ -56,16 +47,13 @@ export default function MonteCarlo() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [showHeatmaps, setShowHeatmaps] = useState(false);
-  const [heatmapOption, setHeatmapOption] = useState('EU Call');
-  const [heatmapMetric, setHeatmapMetric] = useState('Price');
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setParams((p) => ({ ...p, [name]: value }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setLoading(true);
     setError(null);
     try {
@@ -79,7 +67,7 @@ export default function MonteCarlo() {
       const res = await fetch(`${API_BASE}/monte_carlo?${q}`);
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      setResults(data);
+      setResults({ ...data, inputs: params });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -87,57 +75,56 @@ export default function MonteCarlo() {
     }
   };
 
-  const heatmapKey = `${heatmapOption} ${heatmapMetric} Heatmap`;
-
   return (
     <PageShell
-      title="Monte Carlo Simulation"
-      epigraph="Ten thousand futures cast like bones — the price emerges from the dust of their average."
+      title="Monte Carlo"
+      description="Estimate European option prices from simulated stock paths."
     >
-      <section className="panel">
+      <form className="panel workspace-input" onSubmit={handleSubmit}>
         <div className="panel-header">
-          <span className="panel-label">Parameters</span>
+          <h2 className="panel-label">Parameters</h2>
         </div>
         <div className="input-grid">
-          <InputField label="Spot Price" name="S_0" value={params.S_0} onChange={handleChange} hint="S₀" />
-          <InputField label="Strike Price" name="K" value={params.K} onChange={handleChange} hint="K" />
-          <InputField label="Maturity" name="T" value={params.T} onChange={handleChange} hint="years" step="0.01" />
-          <InputField label="Risk-Free Rate" name="r" value={params.r} onChange={handleChange} hint="e.g. 0.05" step="0.001" />
-          <InputField label="Volatility" name="sigma" value={params.sigma} onChange={handleChange} hint="σ" step="0.001" />
-          <InputField label="Div. Yield / Foreign Rate" name="q" value={params.q} onChange={handleChange} hint="q" step="0.001" />
-          <InputField label="Time Steps" name="N" value={params.N} onChange={handleChange} hint="per path" step="1" min="1" />
+          <InputField label="Spot price" name="S_0" value={params.S_0} onChange={handleChange} hint="S₀" />
+          <InputField label="Strike price" name="K" value={params.K} onChange={handleChange} hint="K" />
+          <InputField label="Maturity" name="T" value={params.T} onChange={handleChange} hint="years" />
+          <InputField label="Risk-free rate" name="r" value={params.r} onChange={handleChange} hint="decimal" />
+          <InputField label="Volatility" name="sigma" value={params.sigma} onChange={handleChange} hint="decimal" />
+          <InputField label="Dividend / foreign rate" name="q" value={params.q} onChange={handleChange} hint="decimal" />
+          <InputField label="Time steps" name="N" value={params.N} onChange={handleChange} hint="per path" step="1" min="1" />
           <InputField label="Simulations" name="N2" value={params.N2} onChange={handleChange} hint="paths" step="1" min="2" />
         </div>
 
-        <div className="slider-grid">
+        <div className="slider-grid" role="group" aria-label="Heatmap ranges">
           <DualRangeSlider
-            label="Heatmap Spot Range"
+            label="Spot range"
             min={spotBounds.min} max={spotBounds.max} step={spotStep} decimals={2}
             valueMin={range.minSpot} valueMax={range.maxSpot}
             onChange={(mn, mx) => setRange((r) => ({ ...r, minSpot: mn, maxSpot: mx }))}
           />
           <DualRangeSlider
-            label="Heatmap Volatility Range"
+            label="Volatility range"
             min={volBounds.min} max={volBounds.max} step={volStep} decimals={4}
             valueMin={range.minVol} valueMax={range.maxVol}
             onChange={(mn, mx) => setRange((r) => ({ ...r, minVol: mn, maxVol: mx }))}
           />
         </div>
 
-        <button className="submit-btn" onClick={handleSubmit} disabled={loading}>
-          {loading ? <span className="btn-loading">Simulating…</span> : 'Run Simulation'}
+        <button className="submit-btn" type="submit" disabled={loading}>
+          {loading ? 'Simulating…' : 'Run simulation'}
         </button>
-        {error && <p className="error-msg">{error}</p>}
-      </section>
+        {error && <p className="error-msg" role="alert">{error}</p>}
+      </form>
 
+      {!results && <ResultPlaceholder loading={loading} prompt="Run a simulation to see estimates, intervals, and sample paths." />}
       {results && (
         <>
-          <section className="panel">
+          <section className="panel workspace-result" aria-label="Option prices">
             <div className="panel-header">
-              <span className="panel-label">Option Prices</span>
-              <span className="panel-meta">{Number(params.N2).toLocaleString()} paths · {params.N} steps</span>
+              <h2 className="panel-label">Option prices</h2>
+              <span className="panel-meta">{Number(results.inputs.N2).toLocaleString()} paths · {results.inputs.N} steps</span>
             </div>
-            <div className="result-grid result-grid--2" style={{ marginBottom: '0.5rem' }}>
+            <div className="result-grid">
               <ResultCard label="Call Price" value={results['EU Call']} highlight sub={`± ${Number(results['Call Error']).toFixed(6)} std. error`} />
               <ResultCard label="Put Price"  value={results['EU Put']}  highlight sub={`± ${Number(results['Put Error']).toFixed(6)} std. error`} />
             </div>
@@ -161,102 +148,22 @@ export default function MonteCarlo() {
 
           <section className="panel">
             <div className="panel-header">
-              <span className="panel-label">Greeks</span>
+              <h2 className="panel-label">Greeks</h2>
             </div>
-            <div className="greeks-table">
-              <div className="greeks-header">
-                <span />
-                <span className="greeks-col-label">Call</span>
-                <span className="greeks-col-label">Put</span>
-              </div>
-              {GREEK_GROUPS.map((group) => (
-                <div className="greeks-row" key={group.label}>
-                  <span className="greeks-row-label">{group.label}</span>
-                  <span className="greeks-value">
-                    {results[group.callKey] !== undefined
-                      ? isNaN(results[group.callKey]) ? 'N/A' : Number(results[group.callKey]).toFixed(6)
-                      : '—'}
-                  </span>
-                  <span className="greeks-value">
-                    {results[group.putKey] !== undefined
-                      ? isNaN(results[group.putKey]) ? 'N/A' : Number(results[group.putKey]).toFixed(6)
-                      : '—'}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <GreeksTable results={results} />
           </section>
+
+          <PricingHeatmaps results={results} />
 
           <section className="panel">
             <div className="panel-header">
-              <span className="panel-label">Heatmaps</span>
-              <button
-                className={`section-toggle-btn ${showHeatmaps ? 'section-toggle-btn--active' : ''}`}
-                onClick={() => setShowHeatmaps((s) => !s)}
-              >
-                <span className={`section-toggle-caret ${showHeatmaps ? 'section-toggle-caret--open' : ''}`}>&#9656;</span>
-                {showHeatmaps ? 'Hide Heatmaps' : 'Show Heatmaps'}
-              </button>
-            </div>
-
-            {showHeatmaps && (
-              <>
-                <div className="heatmap-controls">
-                  <div className="heatmap-control-group">
-                    <span className="heatmap-control-group-label">Option</span>
-                    <div className="toggle-pills">
-                      {HEATMAP_OPTIONS.map((opt) => (
-                        <button
-                          key={opt}
-                          className={`toggle-pill ${heatmapOption === opt ? 'toggle-pill--active' : ''}`}
-                          onClick={() => setHeatmapOption(opt)}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="heatmap-control-group">
-                    <span className="heatmap-control-group-label">Metric</span>
-                    <div className="toggle-pills">
-                      {HEATMAP_METRICS.map((metric) => (
-                        <button
-                          key={metric}
-                          className={`toggle-pill ${heatmapMetric === metric ? 'toggle-pill--active' : ''}`}
-                          onClick={() => setHeatmapMetric(metric)}
-                        >
-                          {metric}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {results[heatmapKey] ? (
-                  <Heatmap
-                    matrix={results[heatmapKey]}
-                    rowLabels={results['X Axis']}
-                    colLabels={results['Y Axis']}
-                    mode={heatmapMetric === 'Profit' ? 'profit' : 'price'}
-                    rowAxisTitle="Spot Price"
-                    colAxisTitle="Volatility"
-                  />
-                ) : (
-                  <p className="panel-subtext">No heatmap data returned for this selection.</p>
-                )}
-              </>
-            )}
-          </section>
-
-          <section className="panel">
-            <div className="panel-header">
-              <span className="panel-label">Sample Paths</span>
-              <span className="panel-meta">first {results['Sample Paths']?.length ?? 0} of {Number(params.N2).toLocaleString()} simulations</span>
+              <h2 className="panel-label">Sample paths</h2>
+              <span className="panel-meta">First {results['Sample Paths']?.length ?? 0} of {Number(results.inputs.N2).toLocaleString()} simulations</span>
             </div>
             <PathsChart
               paths={results['Sample Paths']}
-              S_0={Number(params.S_0)}
-              T={Number(params.T)}
+              S_0={Number(results.inputs.S_0)}
+              T={Number(results.inputs.T)}
             />
           </section>
         </>

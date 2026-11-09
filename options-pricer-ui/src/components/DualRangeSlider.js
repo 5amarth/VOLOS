@@ -24,11 +24,12 @@ export default function DualRangeSlider({ label, min, max, step, valueMin, value
         </span>
       </div>
       <div className="dual-slider-track-wrap">
-        <div className="dual-slider-rail" />
-        <div
-          className="dual-slider-fill"
-          style={{ left: `${pctMin}%`, width: `${Math.max(0, pctMax - pctMin)}%` }}
-        />
+        <div className="dual-slider-rail">
+          <div
+            className="dual-slider-fill"
+            style={{ left: `${pctMin}%`, width: `${Math.max(0, pctMax - pctMin)}%` }}
+          />
+        </div>
         <input
           type="range"
           className="dual-slider-input"
